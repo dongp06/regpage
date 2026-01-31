@@ -1,0 +1,30 @@
+{
+  "name": "facebook-page-reg-transfer",
+  "version": "2.0.0",
+  "description": "CLI tạo và bàn giao Facebook Page tự động (reg & transfer)",
+  "main": "app/index.js",
+  "scripts": {
+    "start": "node app/index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "facebook",
+    "page",
+    "automation",
+    "transfer",
+    "cli",
+    "readline",
+    "spinner",
+    "progress-bar",
+    "interactive"
+  ],
+  "author": "DongDev",
+  "license": "MIT",
+  "dependencies": {
+    "axios": "^1.6.0",
+    "dotenv": "^16.3.1"
+  },
+  "engines": {
+    "node": ">=14.0.0"
+  }
+}
