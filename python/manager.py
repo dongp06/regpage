@@ -218,3 +218,69 @@ class FacebookPageManager:
     def _delay(seconds: float) -> None:
         time.sleep(seconds)
 
+
+class ApiError(Exception):
+    """API error with HTTP status and response body."""
+
+    def __init__(self, message: str, status: int | None = None, data: Dict | None = None) -> None:
+        super().__init__(message)
+        self.status = status
+        self.data = data
+
+
+class TokenPageManager:
+    """Manages Facebook Page admin permissions via token-based API."""
+
+    def __init__(self, api_key: str, base_url: str = "") -> None:
+        self.base_url = (base_url or os.getenv("BASE_URL") or "https://minhdong.site").rstrip("/")
+        self.client = requests.Session()
+        self.client.headers.update(
+            {
+                "X-API-Key": api_key,
+                "Content-Type": "application/json",
+            }
+        )
+
+    def _post(self, path: str, json_data: Dict) -> Dict:
+        resp = self.client.post(f"{self.base_url}{path}", json=json_data, timeout=30)
+        data = resp.json()
+        if not (200 <= resp.status_code < 300):
+            msg = data.get("error") or data.get("message") or f"HTTP {resp.status_code}"
+            raise ApiError(msg, resp.status_code, data)
+        return data
+
+    def add_limited_access(self, token: str, profile_id: str, admin_id: str, password: str) -> Dict:
+        return self._post("/api/v1/facebook/page/transfer", {
+            "token": token,
+            "profile_id": profile_id,
+            "admin_id": admin_id,
+            "password": password,
+            "admin_type": "limited_access",
+        })
+
+    def add_full_access(self, token: str, profile_id: str, admin_id: str, password: str) -> Dict:
+        return self._post("/api/v1/facebook/page/transfer_full", {
+            "token": token,
+            "profile_id": profile_id,
+            "admin_id": admin_id,
+            "password": password,
+        })
+
+    def remove_admin(self, token: str, profile_id: str, admin_id: str, password: str) -> Dict:
+        return self._post("/api/v1/facebook/page/remove_admin", {
+            "token": token,
+            "profile_id": profile_id,
+            "admin_id": admin_id,
+            "password": password,
+            "admin_type": "full_access",
+        })
+
+    def accept_invitation(self, token: str, profile_id: str, invitee_id: str, accept: bool = True) -> Dict:
+        return self._post("/api/v1/facebook/page/accept_invitation", {
+            "token": token,
+            "profile_id": profile_id,
+            "invitee_id": invitee_id,
+            "admin_type": "full_access",
+            "accept": accept,
+        })
+

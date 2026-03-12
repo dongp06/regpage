@@ -1,102 +1,163 @@
-# Facebook Page Reg & Transfer Manager
+# Facebook Page Reg & Transfer Manager (Python)
 
-CLI tương tác để **tạo** và **bàn giao** Facebook Page tự động (tạo Page → mời Admin → chấp nhận → gỡ quyền nick gốc).
+CLI tương tác để:
+
+- **Reg & Transfer (Cookie)**: tạo Page → mời admin → nick nhận chấp nhận → gỡ quyền nick gốc.
+- **Admin permissions (Token)**: add/remove/accept/decline quyền admin theo từng action.
+- **Reg & Transfer (Token) [Batch]**: chạy batch theo danh sách `PROFILE_ID` (folder riêng).
+
+> Repo vẫn còn bản NodeJS cũ trong `app/` (xem mục **NodeJS (legacy)**).
+
+## Docs
+
+Xem docs riêng tại `docs/README.md`.
 
 ## Yêu cầu
 
-- **Node.js** >= 14.0.0
-- Tài khoản Facebook (nick gốc tạo Page, nick nhận nhận Page)
-- API Key từ dịch vụ hỗ trợ (ví dụ: minhdong.site)
+- **Python**: 3.10+ (khuyến nghị 3.11/3.12)
+- **API_KEY** từ dịch vụ backend bạn đang dùng (ví dụ: `minhdong.site`)
+- Tài khoản Facebook / cookie / token tuỳ chế độ bạn chạy
 
-## Cài đặt
+## Cài đặt (Python)
+
+Tại thư mục project:
 
 ```bash
-npm install
+cd d:/regpage
+pip install -r python/requirements.txt
 ```
 
-## Cấu hình (.env)
+## Cấu hình `.env`
 
-Ứng dụng đọc cấu hình **hoàn toàn từ file `.env`** (không dùng config.json).
+Tool đọc cấu hình từ file `.env` ở **gốc project** (`d:/regpage/.env`).
 
-1. Sao chép file mẫu:
+Tạo `.env` từ mẫu:
 
 ```bash
+cd d:/regpage
 cp .env.example .env
 ```
 
-2. Mở `.env` và điền giá trị:
+### Biến cho chế độ Cookie (Reg & Transfer Page)
 
-| Biến | Mô tả |
-|------|--------|
-| `API_KEY` | API key từ nhà cung cấp (bắt buộc) |
-| `API_BASE_URL` | URL API (mặc định: `https://minhdong.site/api/v1/facebook`) |
-| `SOURCE_COOKIE` | Cookie nick gốc (dùng để tạo Page) |
-| `SOURCE_PASSWORD` | Mật khẩu nick gốc |
-| `TARGET_UID` | UID nick nhận Page |
-| `TARGET_COOKIE` | Cookie nick nhận |
+| Biến | Bắt buộc | Mô tả |
+|------|----------|------|
+| `API_KEY` | ✅ | API key |
+| `API_BASE_URL` | ❌ | Base URL cookie API (mặc định: `https://minhdong.site/api/v1/facebook`) |
+| `SOURCE_COOKIE` | ✅ | Cookie nick gốc (tạo Page) |
+| `SOURCE_PASSWORD` | ✅ | Password nick gốc |
+| `TARGET_UID` | ✅ | UID nick nhận |
+| `TARGET_COOKIE` | ✅ | Cookie nick nhận |
 
-Có thể tạo/sửa config qua menu **2. Quản lý cấu hình** trong CLI (giá trị sẽ được ghi vào `.env`).
+### Biến cho chế độ Token (Admin permissions / Batch)
 
-## Chạy chương trình
+| Biến | Bắt buộc | Mô tả |
+|------|----------|------|
+| `API_KEY` | ✅ | API key |
+| `BASE_URL` | ✅ | Base host cho token API (vd: `https://minhdong.site`) |
+| `TOKEN` | ✅ | Facebook token |
+| `PROFILE_ID` | ✅ (tool action đơn) | Profile/Page ID dùng cho menu Token action (một lần) |
+| `TARGET_UID` | ✅ | UID target (admin_id) |
+| `PASSWORD` | ✅ | Password (backend yêu cầu để add/remove admin) |
+| `INVITEE_UID` | ❌ | UID người được mời (dùng accept/decline) |
+
+> **Batch Token**: tool sẽ hỏi bạn nhập **danh sách `PROFILE_ID` khi chạy**, không đọc list từ `.env`.
+
+## Chạy chương trình (Python)
+
+### Cách 1: Chạy tool tổng (khuyến nghị)
 
 ```bash
-npm start
+cd d:/regpage
+python -m python.index
 ```
 
-Hoặc:
-
-```bash
-node app/index.js
-```
-
-## Menu chính
+Menu chính (Python):
 
 | Số | Chức năng |
 |----|-----------|
-| 1 | Reg & Transfer Page – Tạo và bàn giao Page theo số lượng |
-| 2 | Quản lý cấu hình – Tạo/load/xem/lưu config vào .env |
-| 3 | Xem hướng dẫn |
-| 4 | Xem thống kê (Coming soon) |
-| 5 | Thoát |
+| 1 | Reg & Transfer Page (Cookie) |
+| 2 | Quản lý quyền Admin (Token) |
+| 3 | Reg & Transfer Page (Token) [Batch] |
+| 4 | Quản lý cấu hình Cookie (`.env`) |
+| 5 | Xem hướng dẫn |
+| 6 | Thoát |
 
-## Quy trình hoạt động
+### Cách 2: Chạy Batch Token bằng folder riêng
 
-1. Tạo Page mới với tên/avatar/bio ngẫu nhiên.
-2. Gửi lời mời Admin cho nick nhận.
-3. Nick nhận tự động chấp nhận.
-4. Nick gốc tự động gỡ quyền (chỉ còn nick nhận làm Admin).
-5. Lặp lại cho đến đủ số lượng (có delay 120s giữa mỗi Page).
+```bash
+cd d:/regpage
+python -m python.token_reg_transfer
+```
 
-## Lưu ý
+Batch sẽ:
 
-- Không tắt chương trình khi đang chạy (đặc biệt lúc đang tạo/bàn giao).
-- Kiểm tra cookie còn hạn trước khi chạy.
-- Không nên tạo quá nhiều Page cùng lúc (khuyến nghị < 20).
-- Mỗi Page khoảng 10–15 giây; delay 120 giây giữa mỗi lần tạo.
+- chạy `transfer_full` cho từng `PROFILE_ID`
+- tuỳ chọn `accept_invitation`
+- tuỳ chọn `remove_admin`
+- in JSON response + báo cáo OK/FAIL
 
-## Cấu trúc thư mục
+## Token actions tương đương code demo JS
+
+Trong menu **2. Quản lý quyền Admin (Token)**, các action map như sau:
+
+- `Add Limited Access Admin` → `POST /api/v1/facebook/page/transfer` (`admin_type=limited_access`)
+- `Add Full Access Admin` → `POST /api/v1/facebook/page/transfer_full`
+- `Remove Admin` → `POST /api/v1/facebook/page/remove_admin` (`admin_type=full_access`)
+- `Accept/Decline Invitation` → `POST /api/v1/facebook/page/accept_invitation` (`accept=true/false`)
+
+## Troubleshooting
+
+### `KeyboardInterrupt` / bấm Ctrl+C
+
+- Bản Python đã bắt `KeyboardInterrupt` để **thoát gọn**, không in traceback.
+
+### Thiếu biến môi trường / load config bị null
+
+- Kiểm tra `.env` có đủ các biến theo chế độ bạn chạy.
+- `python.index` có menu để tạo/lưu config vào `.env`:
+  - Cookie config: **menu 4**
+  - Token config: vào **menu 2 → 6**
+
+### Lỗi HTTP từ backend
+
+- Tool sẽ in:
+  - **HTTP status**
+  - **response JSON** (field `error`/`message` nếu có)
+- Kiểm tra `API_KEY`, `BASE_URL`/`API_BASE_URL`, token/cookie còn sống.
+
+## Cấu trúc thư mục (Python)
 
 ```
 regpage/
-├── app/
-│   ├── index.js      # Entry, load dotenv
-│   ├── app.js        # Logic menu & flow chính
-│   ├── cli.js        # Interactive CLI, đọc/ghi .env
-│   ├── manager.js    # Gọi API Facebook
-│   └── ui/
-│       ├── gradient.js
-│       ├── progress.js
-│       └── spinner.js
-├── .env              # Cấu hình (không commit)
-├── .env.example      # Mẫu biến môi trường
-├── package.json
+├── python/
+│   ├── index.py                  # Tool tổng (menu chính)
+│   ├── cli.py                    # CLI + đọc/ghi .env
+│   ├── manager.py                # Cookie manager + Token manager
+│   ├── ui/                       # gradient/spinner/progress
+│   └── token_reg_transfer/       # Folder riêng: batch token reg&transfer
+│       ├── __main__.py
+│       └── app.py
+├── .env
+├── .env.example
 └── README.md
 ```
 
+## NodeJS (legacy)
+
+Nếu bạn vẫn muốn chạy bản NodeJS cũ:
+
+```bash
+npm install
+npm start
+```
+
+Entry: `app/index.js`
+
 ## Bảo mật
 
-- **Không commit** file `.env` lên Git (chứa cookie, mật khẩu, API key).
-- File `.env` đã được thêm vào `.gitignore`.
+- **Không commit** file `.env` (chứa cookie/token/password/API key).
+- Repo đã ignore `.env` trong `.gitignore`.
 
 ## License
 

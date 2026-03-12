@@ -35,6 +35,17 @@ class AppConfig:
     target_account: AccountConfig
 
 
+@dataclass
+class TokenConfig:
+    api_key: str
+    base_url: str
+    token: str
+    profile_id: str
+    target_uid: str
+    password: str
+    invitee_uid: str = ""
+
+
 class InteractiveCLI:
     def __init__(self) -> None:
         self.env_path = Path(__file__).resolve().parent.parent / ".env"
@@ -79,11 +90,34 @@ class InteractiveCLI:
         print("\n" + gradient("+----------------------------------------------------------+"))
         print(gradient("|   MENU CHINH                                              |"))
         print(gradient("+----------------------------------------------------------+"))
-        print("  1. Reg & Transfer Page")
-        print("  2. Quan ly cau hinh")
-        print("  3. Xem huong dan")
-        print("  4. Xem thong ke (Coming soon)")
-        print("  5. Thoat\n")
+        print("  1. Reg & Transfer Page (Cookie)")
+        print("  2. Quan ly quyen Admin (Token)")
+        print("  3. Reg & Transfer Page (Token) [Batch]")
+        print("  4. Quan ly cau hinh")
+        print("  5. Xem huong dan")
+        print("  6. Thoat\n")
+
+    def display_token_menu(self) -> None:
+        print("\n" + gradient("+----------------------------------------------------------+"))
+        print(gradient("|   QUAN LY QUYEN ADMIN (TOKEN)                             |"))
+        print(gradient("+----------------------------------------------------------+"))
+        print("  1. Add Limited Access Admin")
+        print("  2. Add Full Access Admin")
+        print("  3. Remove Admin")
+        print("  4. Accept Invitation")
+        print("  5. Decline Invitation")
+        print("  6. Cau hinh Token")
+        print("  7. Quay lai\n")
+
+    def display_token_config_menu(self) -> None:
+        print("\n" + gradient("+----------------------------------------------------------+"))
+        print(gradient("|   QUAN LY CAU HINH TOKEN (.env)                           |"))
+        print(gradient("+----------------------------------------------------------+"))
+        print("  1. Tao token config moi")
+        print("  2. Tai lai tu .env")
+        print("  3. Xem config hien tai")
+        print("  4. Luu config vao .env")
+        print("  5. Quay lai\n")
 
     def display_config_menu(self) -> None:
         print("\n" + gradient("+----------------------------------------------------------+"))
@@ -141,6 +175,64 @@ class InteractiveCLI:
         if not value or len(value) <= show_length:
             return value
         return value[:show_length] + "..."
+
+    def load_token_config(self) -> Optional[TokenConfig]:
+        if not self.env_path.exists():
+            return None
+        data = dotenv_values(self.env_path)
+        api_key = data.get("API_KEY")
+        base_url = data.get("BASE_URL") or "https://minhdong.site"
+        token = data.get("TOKEN")
+        profile_id = data.get("PROFILE_ID")
+        target_uid = data.get("TARGET_UID")
+        password = data.get("PASSWORD")
+        invitee_uid = data.get("INVITEE_UID") or ""
+        if not all([api_key, token, profile_id, target_uid, password]):
+            return None
+        return TokenConfig(
+            api_key=api_key,
+            base_url=base_url,
+            token=token,
+            profile_id=profile_id,
+            target_uid=target_uid,
+            password=password,
+            invitee_uid=invitee_uid,
+        )
+
+    def save_token_config(self, config: TokenConfig) -> bool:
+        try:
+            existing = dict(dotenv_values(self.env_path)) if self.env_path.exists() else {}
+            existing.update({
+                "API_KEY": config.api_key,
+                "BASE_URL": config.base_url,
+                "TOKEN": config.token,
+                "PROFILE_ID": config.profile_id,
+                "TARGET_UID": config.target_uid,
+                "PASSWORD": config.password,
+                "INVITEE_UID": config.invitee_uid,
+            })
+            lines = ["# Facebook Page Reg & Transfer - cau hinh"]
+            for key, val in existing.items():
+                lines.append(f"{key}={self._escape_env_value(val)}")
+            self.env_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+            return True
+        except Exception as exc:
+            print("Loi khi luu .env:", exc)
+            return False
+
+    def display_token_config(self, config: TokenConfig) -> None:
+        print("\n" + gradient("+----------------------------------------------------------+"))
+        print(gradient("|   CAU HINH TOKEN HIEN TAI                                |"))
+        print(gradient("+----------------------------------------------------------+"))
+        print(f"\nAPI Key: {self._mask_sensitive_data(config.api_key)}")
+        print(f"Base URL: {config.base_url}")
+        print(f"Token: {self._mask_sensitive_data(config.token, 20)}")
+        print(f"Profile ID: {config.profile_id}")
+        print(f"Target UID: {config.target_uid}")
+        print(f"Password: {'*' * len(config.password)}")
+        if config.invitee_uid:
+            print(f"Invitee UID: {config.invitee_uid}")
+        print()
 
     def display_config(self, config: AppConfig) -> None:
         print("\n" + gradient("+----------------------------------------------------------+"))
